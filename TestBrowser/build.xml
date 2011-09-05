@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== 
+     Aug 19, 2011 1:30:25 AM                                                        
+
+     project    
+     description
+                   
+     Development                                                                
+     ====================================================================== -->
+<project name="project" default="default" basedir = ".">
+    <property name = "src.dir" value = "src"/>
+	<property name = "build.dir" value = "build"/>
+	<property name = "lib.dir" value = "lib"/>
+	<property name = "class.dir" value = "bin"/>
+	<property name = "loader.class" value = "org.groupf.testing.loader.TraceClientLoader"/>
+	<property name = "main.class" value = "org.groupf.testing.Testing"/>
+	<property name = "program.name" value = "browser"/>
+	
+	<description>
+            KwikBrowsa compile file.
+    </description>
+	
+	<target name = "default" depends = "clean, compile, wrapper, actual" description = "Main target">
+		<echo>
+			Building the jar file.
+		</echo>
+		<java fork = "true" jar="${build.dir}/${program.name}.jar">
+		</java>
+	</target>
+	
+	<!-- Generate the jar of the actual browser -->
+	<target name = "actual" depends = "compile">
+		<echo>Building the main program</echo>
+		
+		<jar jarfile = "${build.dir}/${program.name}_ui.jar">
+			<manifest>
+				<attribute name = "Main-Class" value = "${main.class}"/>
+				<attribute name = "Class-Path" value = "${classpath}"/>
+			</manifest>
+			
+			<!-- 
+				"Explode" the jar file and extract the classes, jars can't be loaded in jars
+				(without making your own classloader (like the SWT loader)) :(
+			-->
+			<zipfileset src = "${lib.dir}/swt_ui/swing2swt.jar" includes = "**/*.class"/>
+			<zipfileset src = "${lib.dir}/sql/hsqldb.jar" includes = "**/*.class"/>
+			
+			<fileset dir = "${class.dir}" includes = "**/*.class"/>
+			<fileset dir = "res" includes = "**/**"/>
+		</jar>
+	</target>
+	
+	<!-- Generate the SWT warpper, this is the program that will be launched -->
+	<target name = "wrapper" depends = "actual">
+		<echo>Creating the wrapper</echo>
+		<jar jarfile = "${build.dir}/${program.name}.jar">
+			<manifest>
+				<attribute name = "Main-Class" value = "${loader.class}"/>
+				<attribute name = "Class-Path" value = "."/>
+			</manifest>
+			<fileset dir = "${class.dir}" includes = "**/loader/*.class"/>
+			<fileset dir = "${lib.dir}/swt_os" includes = "swt_*.jar"/>
+			<fileset dir = "${build.dir}" includes = "${program.name}_ui.jar"/>
+			<zipfileset excludes = "META-INF/*.MF" src = "${lib.dir}/jar-in-jar-loader.zip"/>
+		</jar>
+	</target>
+	
+	<target name = "compile" depends = "clean" description = "Compile code">
+		<echo>Compiling code</echo>
+		<javac srcdir="${src.dir}" destdir="${class.dir}" classpath = "." debug="on"/>
+	</target>
+	
+	<target name = "clean" description = "Clean up folders">
+		<echo>Cleaning...</echo>
+		<delete dir = "${build.dir}/*.*"/>
+		<delete dir = "${class.dir}/*.*"/>
+	</target>
+</project>
