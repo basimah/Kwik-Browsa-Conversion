@@ -56,7 +56,8 @@ public class Testing {
 	 * Open the window.
 	 */
 	public void open() throws Exception {
-		/*try {
+		/*
+		try {
 			Class.forName("org.hsqldb.jdbc.JDBCDriver");
 		} catch(Exception e) {
 			System.err.println("ERROR: failed to load JDBC driver");
